@@ -12,12 +12,15 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-  @Query("SELECT c FROM Comment c WHERE c.id < :id and c.specificationId = :specificationId")
-  Slice<Comment> findBySpecificationIdAndIdLessThan(
-      @Param("specificationId") String specificationId,
-      @Param("id") long id,
-      Pageable pageable);
+  @Query("SELECT c FROM Comment c WHERE c.id <= :id and c.specificationId = :specificationId")
+  Slice<Comment> findBySpecificationIdAndIdLessThanOrEqual(
+          @Param("specificationId") String specificationId,
+          @Param("id") long id,
+          Pageable pageable);
 
   Comment findBySpecificationId(String specificationId);
+
+  @Query("SELECT MAX(c.id) FROM Comment c WHERE c.specificationId = :specificationId")
+  Long findMaxIdBySpecificationId(@Param("specificationId") String specificationId);
 
 }

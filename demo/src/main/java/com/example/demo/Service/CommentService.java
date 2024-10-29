@@ -20,24 +20,46 @@ public class CommentService {
 
   private final CommentRepository commentRepository;
 
-  public Slice<CommentDTO> loadComments(String specificationId, Pagination pagination){
+  public Long getIndex(String specificationId){
 
+    Long index = commentRepository.findMaxIdBySpecificationId(specificationId);
+
+    return index;
+  }
+
+  public Slice<CommentDTO> loadComments(String specificationId, Pagination pagination) {
     Pageable pageable = PageRequest.of(0, pagination.getSize());
-    Slice<Comment> comments =
-        commentRepository.findBySpecificationIdAndIdLessThan
-            (specificationId, pagination.getId(), pageable);
 
+    // 먼저 쿼리 결과 확인을 위해 디버깅
+    Slice<Comment> comments = commentRepository.findBySpecificationIdAndIdLessThanOrEqual(
+            specificationId, pagination.getId(), pageable
+    );
+
+    // 결과가 있는지 확인하는 디버그 출력
+    if (comments.isEmpty()) {
+      System.out.println("No comments found for specificationId " + specificationId);
+    } else {
+      System.out.println("Comments fetched: " + comments.getContent().size());
+    }
+
+    // DTO 변환 후 디버깅
     Slice<CommentDTO> commentDTOS = comments.map(comment -> {
       boolean isMine = comment.getWriterNickname().equals(pagination.getUserNickname());
       return new CommentDTO(
-          comment.getId(),
-          comment.getSpecificationId(),
-          comment.getWriterNickname(),
-          comment.getDate(),
-          comment.getContent(),
-          isMine
+              comment.getId(),
+              comment.getSpecificationId(),
+              comment.getWriterNickname(),
+              comment.getDate(),
+              comment.getContent(),
+              isMine
       );
     });
+
+    if (commentDTOS.isEmpty()) {
+      System.out.println("CommentDTO conversion resulted in an empty Slice.");
+    } else {
+      System.out.println("CommentDTOs created: " + commentDTOS.getContent().size());
+    }
 
     return commentDTOS;
   }
