@@ -13,6 +13,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class CommentController {
 
   private final CommentService commentService;
+  private final SimpMessagingTemplate messagingTemplate;
 
   @GetMapping("/index")
   public ResponseEntity<Long> findIndex(@RequestParam String specificationId){
@@ -43,10 +45,10 @@ public class CommentController {
   }
 
   @MessageMapping("/save/{specificationId}")
-  @SendTo("/apiComment/save/{specificationId}")
-  public Comment sendMesssages(@DestinationVariable String specificationId,
-                                @Payload CommentSendDTO commentSendDTO){
-    return commentService.saveComment(specificationId, commentSendDTO);
+  public void sendMessages(@DestinationVariable String specificationId,
+      @Payload CommentSendDTO commentSendDTO) {
+    Comment savedComment = commentService.saveComment(specificationId, commentSendDTO);
+    messagingTemplate.convertAndSend("/apiComment/sub/save/" + specificationId, savedComment);
   }
 
 }

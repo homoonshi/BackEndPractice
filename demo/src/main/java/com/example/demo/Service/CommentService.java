@@ -30,8 +30,9 @@ public class CommentService {
   public Slice<CommentDTO> loadComments(String specificationId, Pagination pagination) {
     Pageable pageable = PageRequest.of(0, pagination.getSize());
 
+    System.out.println("id"+pagination.getId());
     // 먼저 쿼리 결과 확인을 위해 디버깅
-    Slice<Comment> comments = commentRepository.findBySpecificationIdAndIdLessThanOrEqual(
+    Slice<Comment> comments = commentRepository.findClosestCommentsBySpecificationId(
             specificationId, pagination.getId(), pageable
     );
 
@@ -45,7 +46,7 @@ public class CommentService {
     // DTO 변환 후 디버깅
     Slice<CommentDTO> commentDTOS = comments.map(comment -> {
       boolean isMine = comment.getWriterNickname().equals(pagination.getUserNickname());
-      return new CommentDTO(
+      CommentDTO commentDTO = new CommentDTO(
               comment.getId(),
               comment.getSpecificationId(),
               comment.getWriterNickname(),
@@ -53,6 +54,8 @@ public class CommentService {
               comment.getContent(),
               isMine
       );
+      System.out.println(commentDTO.getId());
+      return commentDTO;
     });
 
     if (commentDTOS.isEmpty()) {
